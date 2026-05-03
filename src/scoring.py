@@ -1,6 +1,7 @@
 import chess
 
-CHECKMATE_SCORE = 1000
+from src.pst import evaluate_pst
+
 MATERIAL_SCORES: dict[chess.PieceType, int] = {
     chess.PAWN: 100,
     chess.KNIGHT: 300,
@@ -10,22 +11,29 @@ MATERIAL_SCORES: dict[chess.PieceType, int] = {
 }
 
 
+# prioritize captures, promotions and checks
+def score_move(board: chess.Board, move: chess.Move):
+    if board.is_capture(move):
+        return 1000
+    if move.promotion:
+        return 900
+    if board.gives_check(move):
+        return 800
+    return 0
+
+
 def score_position(board: chess.Board) -> int:
-    if board.is_checkmate():
-        return CHECKMATE_SCORE
+    return evaluate_material(board) + evaluate_pst(board)
 
-    if (
-        board.is_stalemate()
-        or board.is_repetition()
-        or board.is_insufficient_material()
-    ):
-        return 0
 
-    turn = board.turn
+# =========================
+# 1. MATERIAL
+# =========================
+def evaluate_material(board: chess.Board) -> int:
+
     material_score = 0
-    other_turn = chess.BLACK if board.turn == chess.WHITE else chess.WHITE
     for material, score in MATERIAL_SCORES.items():
-        pieces = board.pieces(material, turn)
-        opponent_pieces = board.pieces(material, other_turn)
+        pieces = board.pieces(material, chess.WHITE)
+        opponent_pieces = board.pieces(material, chess.BLACK)
         material_score += (len(pieces) - len(opponent_pieces)) * score
     return material_score

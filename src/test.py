@@ -1,0 +1,120 @@
+import chess
+import time
+
+from src.search import find_best_move
+
+# =========================
+# TEST POSITIONS
+# =========================
+TESTS = [
+    # L1 should handle
+    {
+        "name": "Free Queen",
+        "fen": "rnb1kbnr/pppp1ppp/8/4p3/3q4/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 1",
+        "best": ["f3d4"],  # Nxd4
+    },
+    {
+        "name": "Back-rank Mate Threat",
+        "fen": "6k1/5ppp/8/8/8/8/5PPP/5RK1 w - - 0 1",
+        "best": ["f1a1", "f1b1", "f1c1", "f1d1", "f1e1"],
+    },
+    {
+        "name": "Knight Fork",
+        "fen": "r3k2r/pppp1ppp/2n1q3/3Np3/8/8/PPP2PPP/R1BQ1RK1 w kq - 0 1",
+        "best": ["d5c7"],  # Nc7+
+    },
+    {
+        "name": "Remove Defender",
+        "fen": "1k6/p7/1p1prrB1/7P/4R3/2P3K1/PP3P2/8 b - - 0 1",
+        "best": ["f6g6"],  # dxe5
+    },
+    {
+        "name": "Mate in 1",
+        "fen": "6k1/5ppp/8/8/8/8/5PPP/4RRK1 w - - 0 1",
+        "best": ["e1e8"],
+    },
+    # L2 should handle well
+    {
+        "name": "Provoking Positional Weakness",
+        "fen": "r2q1rk1/ppp1b1pp/2n1bp2/3p4/5B2/2PB1N2/PP3PPP/R2Q1RK1 w - - 0 1",
+        "best": ["d1c2"],
+    },
+    {
+        "name": "Mate in 3 + Queen Sac",
+        "fen": "r4rk1/1p3ppp/3Rn3/p4NR1/1P6/5K2/P1Q1PP1P/q7 w - - 12 27",
+        "best": ["f5e7"],
+    },
+    {
+        "name": "Greek Gift Mate in 7",
+        "fen": "rnb2rk1/pp1nqppp/4p3/3pP3/3p3P/2NB3N/PPP2PP1/R2QK2R w KQ - 0 10",
+        "best": ["d3h7"],
+    },
+    {
+        "name": "Multiple exchanges",
+        "fen": "rnb2rk1/pp3pbp/6p1/q1pPN3/2B1n3/2N5/PP1B1PPP/R2QK2R b KQ - 2 12",
+        "best": ["e4d2"],
+    },
+    {
+        "name": "Trade sequence in Berlin defense",
+        "fen": "r1bqkb1r/pppp1ppp/2nn4/1B2p3/3P4/5N2/PPP2PPP/RNBQ1RK1 w kq - 1 6",
+        "best": ["b5c6"],
+    },
+    # L3 should Optimize
+    {
+        "name": "Transposition-Heavy Calculation",
+        "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/3P4/2N5/PPP1PPPP/R1BQKBNR w KQkq - 0 1",
+        "best": ["d4e5", "d4d5"],
+    },
+    {
+        "name": "Closed Position",
+        "fen": "r2qk2r/1p1b1pp1/p1pBpn1p/2P1N3/1n1P4/3B4/PPQ2PPP/2KR3R w kq - 0 1",
+        "best": ["d3g6"],
+    },
+]
+
+
+# =========================
+# TEST RUNNER
+# =========================
+def run_tests(depth=3):
+    correct = 0
+    total_time = 0
+
+    print(f"\nRunning tests at depth {depth}\n")
+
+    for test in TESTS:
+        board = chess.Board(test["fen"])
+        print(board)
+
+        start = time.time()
+        score, move = find_best_move(board, depth)
+        end = time.time()
+
+        elapsed = end - start
+        total_time += elapsed
+
+        is_correct = move.uci() in test["best"]
+
+        if is_correct:
+            correct += 1
+            result = "✅"
+        else:
+            result = "❌"
+
+        print(f"{result} {test['name']}")
+        print(f"   Move: {move.uci()} (score: {score})")
+        print(f"   Expected: {test['best']}")
+        print(f"   Time: {elapsed:.4f}s\n")
+
+    print("======== SUMMARY ========")
+    print(f"Score: {correct}/{len(TESTS)}")
+    print(f"Accuracy: {correct / len(TESTS) * 100:.1f}%")
+    print(f"Total time: {total_time:.2f}s")
+    print("=========================")
+
+
+# =========================
+# RUN
+# =========================
+if __name__ == "__main__":
+    run_tests(depth=5)
