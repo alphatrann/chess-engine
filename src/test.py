@@ -59,6 +59,16 @@ TESTS = [
         "fen": "r1bqkb1r/pppp1ppp/2nn4/1B2p3/3P4/5N2/PPP2PPP/RNBQ1RK1 w kq - 1 6",
         "best": ["b5c6"],
     },
+    {
+        "name": "Pawn structures",
+        "fen": "rnb4r/1p2kpp1/p7/4p1N1/1b5p/2N4P/PPP3P1/2KR1B1R b - - 2 15",
+        "best": ["b4c3"],
+    },
+    {
+        "name": "Rook Sac to Open White's King",
+        "fen": "2rq1rk1/pp1bpp2/3p1npQ/4n2p/3NP2P/1BN2P2/PPP3P1/2KR3R b - - 0 14",
+        "best": ["c8c3"],
+    },
     # L3 should Optimize
     {
         "name": "Transposition-Heavy Calculation",
@@ -66,7 +76,7 @@ TESTS = [
         "best": ["d4e5", "d4d5"],
     },
     {
-        "name": "Closed Position",
+        "name": "Silent Killer Move",
         "fen": "r2qk2r/1p1b1pp1/p1pBpn1p/2P1N3/1n1P4/3B4/PPQ2PPP/2KR3R w kq - 0 1",
         "best": ["d3g6"],
     },
