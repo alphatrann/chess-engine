@@ -71,9 +71,14 @@ TESTS = [
     },
     # L3 should Optimize
     {
-        "name": "Transposition-Heavy Calculation",
-        "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/3P4/2N5/PPP1PPPP/R1BQKBNR w KQkq - 0 1",
-        "best": ["d4e5", "d4d5"],
+        "name": "Symmetrical Position (Optimization with TT)",
+        "fen": "r2q1rk1/ppp2ppp/2n2n2/3pp3/3PP3/2N2N2/PPP2PPP/R2Q1RK1 w - - 0 1",
+        "best": ["d4e5", "e4d5"],
+    },
+    {
+        "name": "Open Games",
+        "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1",
+        "best": ["f1c4", "f1b5", "d2d4", "b1c3"],
     },
     {
         "name": "Silent Killer Move",
