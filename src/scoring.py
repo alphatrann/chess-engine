@@ -11,14 +11,30 @@ MATERIAL_SCORES: dict[chess.PieceType, int] = {
 }
 
 
-# prioritize captures, promotions and checks
-def score_move(board: chess.Board, move: chess.Move):
+def score_move(
+    board: chess.Board,
+    killer_moves: list[list[chess.Move | None]],
+    move: chess.Move,
+    ply: int,
+):
+    # captures (still highest)
     if board.is_capture(move):
         return 1000
+
+    # promotions
     if move.promotion:
         return 900
+
+    # checks
     if board.gives_check(move):
         return 800
+
+    # killer moves (quiet but important)
+    if move == killer_moves[ply][0]:
+        return 700
+    if move == killer_moves[ply][1]:
+        return 600
+
     return 0
 
 

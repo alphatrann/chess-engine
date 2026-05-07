@@ -9,6 +9,7 @@ from src.zobrist import init_zobrist, zobrist_hash
 CHECKMATE_SCORE = 100000
 INF = 10**9
 MAX_Q_DEPTH = 6
+MAX_DEPTH = 64
 
 
 class TranspositionTableItem(TypedDict):
@@ -19,27 +20,37 @@ class TranspositionTableItem(TypedDict):
 
 zobrist_tables = init_zobrist()
 tt: dict[int, TranspositionTableItem] = dict()
+killer_moves: list[list[chess.Move | None]] = [[None, None] for _ in range(MAX_DEPTH)]
 cache_hits = 0
 
 
 def find_best_move(board: chess.Board, depth: int):
-    global cache_hits
+    global cache_hits, killer_moves
     cache_hits = 0
     tt.clear()
     best_move = None
     best_score = -INF
 
+    killer_moves = [[None, None] for _ in range(MAX_DEPTH)]
+
     for d in range(1, depth + 1):
-        best_score, best_move = __search_root(board, d, best_move)
+        best_score, best_move = __search_root(board, killer_moves, d, best_move)
 
     print("⚡ Cache hits:", cache_hits)
 
     return best_score, best_move
 
 
-def __search_root(board: chess.Board, depth, prev_best_move=None):
+def __search_root(
+    board: chess.Board,
+    killer_moves: list[list[chess.Move | None]],
+    depth,
+    prev_best_move=None,
+):
     moves = list(board.generate_legal_moves())
-    sorted_moves = sorted(moves, key=lambda move: score_move(board, move), reverse=True)
+    sorted_moves = sorted(
+        moves, key=lambda move: score_move(board, killer_moves, move, 0), reverse=True
+    )
 
     if prev_best_move in sorted_moves:
         sorted_moves.remove(prev_best_move)
@@ -53,7 +64,7 @@ def __search_root(board: chess.Board, depth, prev_best_move=None):
 
     for move in sorted_moves:
         board.push(move)
-        score = -__search(board, depth - 1, 1, -beta, -alpha)
+        score = -__search(board, killer_moves, depth - 1, 0, -beta, -alpha)
         board.pop()
 
         if score > best_score:
@@ -65,7 +76,14 @@ def __search_root(board: chess.Board, depth, prev_best_move=None):
     return best_score, best_move
 
 
-def __search(board: chess.Board, depth, ply, alpha=-INF, beta=INF):
+def __search(
+    board: chess.Board,
+    killer_moves: list[list[chess.Move | None]],
+    depth,
+    ply,
+    alpha=-INF,
+    beta=INF,
+):
     global cache_hits
     h = zobrist_hash(board, zobrist_tables)
     if h in tt and tt[h]["depth"] >= depth:
@@ -100,18 +118,24 @@ def __search(board: chess.Board, depth, ply, alpha=-INF, beta=INF):
     best_score = -INF
 
     moves = list(board.generate_legal_moves())
-    sorted_moves = sorted(moves, key=lambda move: score_move(board, move), reverse=True)
+    sorted_moves = sorted(
+        moves, key=lambda move: score_move(board, killer_moves, move, ply), reverse=True
+    )
     original_alpha = alpha
 
     for move in sorted_moves:
         board.push(move)
-        score = -__search(board, depth - 1, ply + 1, -beta, -alpha)
+        score = -__search(board, killer_moves, depth - 1, ply + 1, -beta, -alpha)
         board.pop()
 
         best_score = max(best_score, score)
         alpha = max(alpha, score)
 
         if alpha >= beta:
+            if not board.is_capture(move):
+                if killer_moves[ply][0] != move:
+                    killer_moves[ply][1] = killer_moves[ply][0]
+                    killer_moves[ply][0] = move
             break
     if best_score <= original_alpha:
         flag = "UPPER"

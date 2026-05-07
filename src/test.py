@@ -85,6 +85,16 @@ TESTS = [
         "fen": "r2qk2r/1p1b1pp1/p1pBpn1p/2P1N3/1n1P4/3B4/PPQ2PPP/2KR3R w kq - 0 1",
         "best": ["d3g6"],
     },
+    {
+        "name": "Should a hold a draw with a silent move",
+        "fen": "4r2k/1b3Q1p/p1q3p1/1p4B1/2pb4/8/PPB3PP/5R1K w - - 0 1",
+        "best": ["c2e4"],
+    },
+    {
+        "name": "Should spot a silent move that traps the queen, forcing white to give up material",
+        "fen": "4rrk1/ppp3pp/3p2n1/3Ppqb1/nPP5/6P1/P1NBQP1P/2R1NRK1 b - - 0 1",
+        "best": ["a4c3"],
+    },
 ]
 
 
