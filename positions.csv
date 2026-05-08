@@ -1,0 +1,33 @@
+name,fen,best
+Puzzle #1,r6r/1pp3k1/1b6/p2P1p2/P1N1pn2/2P2PP1/BP5P/4RR1K b - - 0 1,h8h2
+Puzzle #5,rn1qk2r/ppp2ppp/5n2/2b1p3/2B1P1b1/3P1N2/PPP3PP/RNBQK2R w KQkq - 0 1,c4f7
+Puzzle #10,2b5/4Q1pp/pp3n1k/3p3q/P2P1P2/BP1B2P1/7P/6K1 w - - 0 1,e7f6
+Puzzle #15,6k1/5pp1/p1n1r2p/2NQ4/1P1p4/P6P/1B1bqPP1/5RK1 b - - 0 1,e2f1
+Puzzle #20,6k1/5pp1/p1n1r2p/2NQ4/1P1p4/P6P/1B1bqPP1/5RK1 b - - 0 1,e2f1
+Puzzle #25,8/1p3q1k/2p3pp/4P1r1/8/4Q3/PP5P/3R3K b - - 0 1,g5e5
+Puzzle #30,4q1k1/2r3pp/1p6/8/1b2N3/4R1P1/PP3P1P/R5K1 w - - 0 1,e4f6
+Puzzle #35,2r3k1/pb2bp1p/1p2p1p1/8/q1NPP3/3B4/P3QPPP/3R2K1 b - - 0 1,b7e4
+Puzzle #40,2r2rk1/pQ1n1pp1/1p2p2p/3p4/P2P4/4P2P/1qB2PP1/2R2RK1 w - - 0 1,c2h7
+Puzzle #45,r3nrk1/1bp2ppp/pp2p3/3q2N1/1b1PNP2/3B2P1/PP2QP1P/2RR2K1 w - - 0 1,g5h7
+Puzzle #50,r3br1k/pp5p/4B1p1/4NpP1/P2Pn3/q1PQ3R/7P/3R2K1 w - - 0 1,h3h7
+Puzzle #225,8/2R3pk/2N2r1p/1p3p2/1Pb1p2P/8/1r3PP1/R5K1 b - - 0 1,e4e3
+Puzzle #230,3k4/1b1nb2R/2p5/1p1Ppr2/p7/P1NP1N2/BPP3K1/8 w - - 0 1,d5d6
+Puzzle #235,r1b3n1/ppp2qb1/2kp4/5PB1/3P2PQ/2PB4/PP3K2/4R3 w - - 0 1,d4d5
+Puzzle #240,r2qkb1r/2p2pp1/p1npb2p/1p6/2P1P3/1BQ1B3/PP3PPP/RN2K2R b - - 0 1,d6d5
+Puzzle #245,4rr1k/1ppb3p/2q1n1p1/p7/3b4/1BP1B3/PP3PP1/2KR1Q1R w - - 0 1,d1d4
+Puzzle #246,r2qb1k1/p1pr2bp/1pn2pN1/3NpPpQ/4P3/B7/PPP3PP/R4R1K b - - 0 1,d7d5
+Puzzle #250,r2q1rk1/ppp2pp1/2n1b2p/3n4/2BP4/2P2N2/P1Q2PPP/R1B1R1K1 w - - 0 1,c1h6
+Puzzle #255,3rrb1k/1p1b1pp1/2pp2p1/pq5N/1P2P3/P4PQ1/1BP3PP/3RR2K w - - 0 1,h5f6
+Puzzle #307,5rk1/pb1p2p1/1p1pp2p/6r1/2PPp2q/P3P1N1/1P2BP2/R3QRK1 b - - 0 1,h4h3
+Puzzle #308,r2qrnk1/1b2bppp/pp6/2ppN1B1/3PnP2/2PB1N1Q/PP4PP/4RRK1 w - - 0 1,e5f7
+Puzzle #309,2r3rk/3q1p1p/5p2/1p1p1b2/2pN3R/P1P1R3/1P3PPP/3Q2K1 w - - 0 1,e3e7
+Puzzle #310,4r1k1/ppp2ppp/2b5/2b2P2/3r4/3B3P/PPPB2P1/R2R3K b - - 0 1,d4d3
+Puzzle #311,7k/ppq1b1pp/8/2P5/1P2R1Q1/2P5/P4rPp/2B4K w - - 0 1,c1f4
+Puzzle #1 (Pos),1r1n1rk1/b1p1qppp/p2p1n2/4pP2/P3P3/2PPNB2/6PP/R1BQK2R w KQ - 0 1,g2g4
+Puzzle #2 (Pos),r2q1rk1/pbpnnpbp/1p1pp1p1/8/3PPP2/2NBB3/PPPQN1PP/R4RK1 w - - 0 1,f4f5
+Puzzle #3 (Pos),r3r1k1/ppq1bppp/2ppnn2/4p3/4PP2/2PP2PP/PPB1Q3/RNB2RK1 w - - 0 1,f4f5
+Puzzle #4 (Pos),r1bqk2r/3n1ppp/p3p3/1pb1P3/5P2/3n1N2/PPPBQ1PP/R2NK2R w KQkq 0 1,c2d3
+Puzzle #10 (Pos),r1bkq2r/pppp1ppp/2n5/8/2BPn3/2P2N2/P4PPP/R1BQ1RK1 b - kq 0 1,d3d5
+Puzzle #13 (Pos),2rq1rk1/1p1bppbp/p2p1np1/4nPP1/3NP3/2N1B2P/PPP1B3/R2Q1RK1 b - - 0 1,c8c3
+Puzzle #15 (Pos),r1bq1rk1/ppp2pp1/1bnp1n1p/3Np3/1PB1P3/2PP1N2/P4PPP/R1BQ1RK1 w - - 0 1,a2a4
+Puzzle #18 (Pos),r2qk1nr/ppp2ppp/2npb3/2bNp3/2B1P3/3P1N2/PPP2PPP/R1BQK2R b KQkq 0 1,c6a5

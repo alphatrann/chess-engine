@@ -22,19 +22,21 @@ zobrist_tables = init_zobrist()
 tt: dict[int, TranspositionTableItem] = dict()
 killer_moves: list[list[chess.Move | None]] = [[None, None] for _ in range(MAX_DEPTH)]
 cache_hits = 0
+history = [[0 for _ in range(64)] for _ in range(64)]
 
 
 def find_best_move(board: chess.Board, depth: int):
-    global cache_hits, killer_moves
+    global cache_hits, killer_moves, history
     cache_hits = 0
     tt.clear()
     best_move = None
     best_score = -INF
 
     killer_moves = [[None, None] for _ in range(MAX_DEPTH)]
+    history = [[0 for _ in range(64)] for _ in range(64)]
 
     for d in range(1, depth + 1):
-        best_score, best_move = __search_root(board, killer_moves, d, best_move)
+        best_score, best_move = __search_root(board, d, best_move)
 
     print("⚡ Cache hits:", cache_hits)
 
@@ -43,13 +45,15 @@ def find_best_move(board: chess.Board, depth: int):
 
 def __search_root(
     board: chess.Board,
-    killer_moves: list[list[chess.Move | None]],
     depth,
     prev_best_move=None,
 ):
+    global killer_moves, history
     moves = list(board.generate_legal_moves())
     sorted_moves = sorted(
-        moves, key=lambda move: score_move(board, killer_moves, move, 0), reverse=True
+        moves,
+        key=lambda move: score_move(board, killer_moves, history, move, 0),
+        reverse=True,
     )
 
     if prev_best_move in sorted_moves:
@@ -64,7 +68,7 @@ def __search_root(
 
     for move in sorted_moves:
         board.push(move)
-        score = -__search(board, killer_moves, depth - 1, 0, -beta, -alpha)
+        score = -__search(board, depth - 1, 1, -beta, -alpha)
         board.pop()
 
         if score > best_score:
@@ -78,13 +82,12 @@ def __search_root(
 
 def __search(
     board: chess.Board,
-    killer_moves: list[list[chess.Move | None]],
     depth,
     ply,
     alpha=-INF,
     beta=INF,
 ):
-    global cache_hits
+    global cache_hits, killer_moves, history
     h = zobrist_hash(board, zobrist_tables)
     if h in tt and tt[h]["depth"] >= depth:
         entry = tt[h]
@@ -119,13 +122,15 @@ def __search(
 
     moves = list(board.generate_legal_moves())
     sorted_moves = sorted(
-        moves, key=lambda move: score_move(board, killer_moves, move, ply), reverse=True
+        moves,
+        key=lambda move: score_move(board, killer_moves, history, move, ply),
+        reverse=True,
     )
     original_alpha = alpha
 
     for move in sorted_moves:
         board.push(move)
-        score = -__search(board, killer_moves, depth - 1, ply + 1, -beta, -alpha)
+        score = -__search(board, depth - 1, ply + 1, -beta, -alpha)
         board.pop()
 
         best_score = max(best_score, score)
@@ -136,6 +141,8 @@ def __search(
                 if killer_moves[ply][0] != move:
                     killer_moves[ply][1] = killer_moves[ply][0]
                     killer_moves[ply][0] = move
+
+                history[move.from_square][move.to_square] += depth * depth
             break
     if best_score <= original_alpha:
         flag = "UPPER"
