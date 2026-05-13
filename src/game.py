@@ -6,7 +6,7 @@ from src.search import find_best_move
 # =========================
 # CONFIG
 # =========================
-ENGINE_DEPTH = 6
+ENGINE_DEPTH = 5
 
 
 # =========================

@@ -3,7 +3,7 @@ Puzzle #1,r6r/1pp3k1/1b6/p2P1p2/P1N1pn2/2P2PP1/BP5P/4RR1K b - - 0 1,h8h2
 Puzzle #5,rn1qk2r/ppp2ppp/5n2/2b1p3/2B1P1b1/3P1N2/PPP3PP/RNBQK2R w KQkq - 0 1,c4f7
 Puzzle #10,2b5/4Q1pp/pp3n1k/3p3q/P2P1P2/BP1B2P1/7P/6K1 w - - 0 1,e7f6
 Puzzle #15,6k1/5pp1/p1n1r2p/2NQ4/1P1p4/P6P/1B1bqPP1/5RK1 b - - 0 1,e2f1
-Puzzle #20,6k1/5pp1/p1n1r2p/2NQ4/1P1p4/P6P/1B1bqPP1/5RK1 b - - 0 1,e2f1
+Puzzle #20,r1bqkbnr/pppp3p/2n2p2/6p1/2BPPp2/5N2/PPP3PP/RNBQK2R w KQkq - 0 1,f3g5
 Puzzle #25,8/1p3q1k/2p3pp/4P1r1/8/4Q3/PP5P/3R3K b - - 0 1,g5e5
 Puzzle #30,4q1k1/2r3pp/1p6/8/1b2N3/4R1P1/PP3P1P/R5K1 w - - 0 1,e4f6
 Puzzle #35,2r3k1/pb2bp1p/1p2p1p1/8/q1NPP3/3B4/P3QPPP/3R2K1 b - - 0 1,b7e4
@@ -26,8 +26,8 @@ Puzzle #311,7k/ppq1b1pp/8/2P5/1P2R1Q1/2P5/P4rPp/2B4K w - - 0 1,c1f4
 Puzzle #1 (Pos),1r1n1rk1/b1p1qppp/p2p1n2/4pP2/P3P3/2PPNB2/6PP/R1BQK2R w KQ - 0 1,g2g4
 Puzzle #2 (Pos),r2q1rk1/pbpnnpbp/1p1pp1p1/8/3PPP2/2NBB3/PPPQN1PP/R4RK1 w - - 0 1,f4f5
 Puzzle #3 (Pos),r3r1k1/ppq1bppp/2ppnn2/4p3/4PP2/2PP2PP/PPB1Q3/RNB2RK1 w - - 0 1,f4f5
-Puzzle #4 (Pos),r1bqk2r/3n1ppp/p3p3/1pb1P3/5P2/3n1N2/PPPBQ1PP/R2NK2R w KQkq 0 1,c2d3
-Puzzle #10 (Pos),r1bkq2r/pppp1ppp/2n5/8/2BPn3/2P2N2/P4PPP/R1BQ1RK1 b - kq 0 1,d3d5
+Puzzle #4 (Pos),r1bqk2r/3n1ppp/p3p3/1pb1P3/5P2/3n1N2/PPPBQ1PP/R2NK2R w KQkq - 0 1,c2d3
+Puzzle #10 (Pos),r1bkq2r/pppp1ppp/2n5/8/2BPn3/2P2N2/P4PPP/R1BQ1RK1 b kq - 0 1,d7d5
 Puzzle #13 (Pos),2rq1rk1/1p1bppbp/p2p1np1/4nPP1/3NP3/2N1B2P/PPP1B3/R2Q1RK1 b - - 0 1,c8c3
 Puzzle #15 (Pos),r1bq1rk1/ppp2pp1/1bnp1n1p/3Np3/1PB1P3/2PP1N2/P4PPP/R1BQ1RK1 w - - 0 1,a2a4
-Puzzle #18 (Pos),r2qk1nr/ppp2ppp/2npb3/2bNp3/2B1P3/3P1N2/PPP2PPP/R1BQK2R b KQkq 0 1,c6a5
+Puzzle #18 (Pos),r2qk1nr/ppp2ppp/2npb3/2bNp3/2B1P3/3P1N2/PPP2PPP/R1BQK2R b KQkq - 0 1,c6a5
