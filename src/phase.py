@@ -14,3 +14,7 @@ def get_game_phase(board: chess.Board) -> int:
     phase += len(board.pieces(chess.KNIGHT, chess.BLACK))
 
     return min(phase, 24)
+
+
+def interp(opening, endgame, phase):
+    return (opening * phase + endgame * (24 - phase)) // 24
