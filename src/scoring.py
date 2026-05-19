@@ -21,7 +21,6 @@ def game_phase(board: chess.Board) -> int:
     phase = 0
 
     for piece_type, weight in PHASE_WEIGHTS.items():
-
         phase += (
             len(board.pieces(piece_type, chess.WHITE))
             + len(board.pieces(piece_type, chess.BLACK))
@@ -48,11 +47,8 @@ def isolated_pawn(board, square, color):
     file = chess.square_file(square)
 
     for adjacent in [file - 1, file + 1]:
-
         if 0 <= adjacent <= 7:
-
             for pawn in board.pieces(chess.PAWN, color):
-
                 if chess.square_file(pawn) == adjacent:
                     return False
 
@@ -66,7 +62,6 @@ def doubled_pawn(board, square, color):
     count = 0
 
     for pawn in board.pieces(chess.PAWN, color):
-
         if chess.square_file(pawn) == file:
             count += 1
 
@@ -81,7 +76,6 @@ def passed_pawn(board, square, color):
     rank = chess.square_rank(square)
 
     for pawn in board.pieces(chess.PAWN, enemy):
-
         ef = chess.square_file(pawn)
         er = chess.square_rank(pawn)
 
@@ -89,12 +83,10 @@ def passed_pawn(board, square, color):
             continue
 
         if color == chess.WHITE:
-
             if er > rank:
                 return False
 
         else:
-
             if er < rank:
                 return False
 
@@ -114,14 +106,12 @@ def mobility(board, color):
     board.turn = color
 
     for move in board.legal_moves:
-
         piece = board.piece_at(move.from_square)
 
         if piece is None:
             continue
 
         match piece.piece_type:
-
             case chess.KNIGHT:
                 score += 4
 
@@ -162,19 +152,15 @@ def king_safety(board, color, phase):
     shield = 0
 
     for pawn in pawns:
-
         pf = chess.square_file(pawn)
         pr = chess.square_rank(pawn)
 
         if abs(pf - king_file) <= 1:
-
             if color == chess.WHITE:
-
                 if pr >= king_rank:
                     shield += 1
 
             else:
-
                 if pr <= king_rank:
                     shield += 1
 
@@ -182,7 +168,6 @@ def king_safety(board, color, phase):
 
     # punish exposed king in middlegame
     if phase > 16:
-
         center_distance = abs(king_file - 3.5) + abs(king_rank - 3.5)
 
         score += int(center_distance * 8)
@@ -203,13 +188,11 @@ def development(board, color):
 
     # knights
     for sq in board.pieces(chess.KNIGHT, color):
-
         if chess.square_rank(sq) != back_rank:
             score += 15
 
     # bishops
     for sq in board.pieces(chess.BISHOP, color):
-
         if chess.square_rank(sq) != back_rank:
             score += 15
 
@@ -234,20 +217,17 @@ def rook_activity(board, color):
     enemy = not color
 
     for rook in board.pieces(chess.ROOK, color):
-
         file = chess.square_file(rook)
 
         friendly_pawn = False
         enemy_pawn = False
 
         for pawn in board.pieces(chess.PAWN, color):
-
             if chess.square_file(pawn) == file:
                 friendly_pawn = True
                 break
 
         for pawn in board.pieces(chess.PAWN, enemy):
-
             if chess.square_file(pawn) == file:
                 enemy_pawn = True
                 break
@@ -298,19 +278,15 @@ def evaluate(board: chess.Board) -> int:
     # =====================================================
 
     for color in [chess.WHITE, chess.BLACK]:
-
         sign = 1 if color == chess.WHITE else -1
 
         # bishop pair
         if len(board.pieces(chess.BISHOP, color)) >= 2:
-
             mg_score += sign * 35
             eg_score += sign * 50
 
         for piece_type in chess.PIECE_TYPES:
-
             for square in board.pieces(piece_type, color):
-
                 mg = MG_VALUES[piece_type]
                 eg = EG_VALUES[piece_type]
 
@@ -331,19 +307,15 @@ def evaluate(board: chess.Board) -> int:
                 # =========================================
 
                 if piece_type == chess.PAWN:
-
                     if isolated_pawn(board, square, color):
-
                         mg -= 15
                         eg -= 10
 
                     if doubled_pawn(board, square, color):
-
                         mg -= 12
                         eg -= 10
 
                     if passed_pawn(board, square, color):
-
                         rank = chess.square_rank(square)
 
                         if color == chess.BLACK:
@@ -376,7 +348,6 @@ def evaluate(board: chess.Board) -> int:
         # ================================================
 
         if phase >= 16:
-
             mg_score += sign * development(
                 board,
                 color,

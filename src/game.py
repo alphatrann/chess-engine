@@ -29,7 +29,6 @@ def print_board(board: chess.Board):
 def print_game_status(board: chess.Board):
 
     if board.is_checkmate():
-
         winner = "Black" if board.turn == chess.WHITE else "White"
 
         print(f"\nCheckmate! {winner} wins.")
@@ -57,11 +56,9 @@ def print_game_status(board: chess.Board):
 def get_player_move(board: chess.Board) -> chess.Move:
 
     while True:
-
         move_input = input("Your move (UCI): ").strip().lower()
 
         try:
-
             move = chess.Move.from_uci(move_input)
 
             if move in board.legal_moves:
@@ -83,7 +80,6 @@ def get_player_move(board: chess.Board) -> chess.Move:
 def get_player_color() -> bool:
 
     while True:
-
         color = input("Choose your color ([w]hite / [b]lack): ").strip().lower()
 
         if color == "w":
@@ -99,11 +95,9 @@ def get_player_color() -> bool:
 def get_engine_level() -> int:
 
     while True:
-
         level_input = input(f"Choose engine level ({MIN_LEVEL}-{MAX_LEVEL}): ").strip()
 
         try:
-
             level = int(level_input)
 
             if MIN_LEVEL <= level <= MAX_LEVEL:
@@ -119,7 +113,7 @@ def get_engine_level() -> int:
 def print_engine_info(level: int):
 
     estimated_times = {
-        1: "~0.05s",
+        1: "~0.5s",
         2: "~0.10s",
         3: "~0.20s",
         4: "~0.40s",
@@ -170,7 +164,6 @@ def play_game():
     print()
 
     while True:
-
         print_board(board)
 
         if print_game_status(board):
@@ -181,7 +174,6 @@ def play_game():
         # =====================================
 
         if board.turn == player_color:
-
             move = get_player_move(board)
 
             board.push(move)
@@ -193,7 +185,6 @@ def play_game():
         # =====================================
 
         else:
-
             print("\nEngine thinking...\n")
 
             start = time.perf_counter()
@@ -219,7 +210,6 @@ def play_game():
         # =====================================
 
         if print_game_status(board):
-
             print_board(board)
             break
 
