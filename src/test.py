@@ -1,6 +1,7 @@
 import chess
 import time
 import csv
+from src.config import LEVELS
 from src.search import find_best_move
 
 # =========================
@@ -31,7 +32,7 @@ def run_tests(depth=3):
         print(board)
 
         start = time.time()
-        score, move = find_best_move(board, depth)
+        score, move = find_best_move(board, LEVELS[depth])
         end = time.time()
 
         elapsed = end - start
