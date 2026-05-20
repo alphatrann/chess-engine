@@ -2,8 +2,15 @@
 # CONFIG
 # =========================================
 
+from pathlib import Path
+import sys
+
+
 MAX_PLY = 20
-DATABASE_PATH = "human_book.db"
+
+BASE_DIR = Path(sys.argv[0]).resolve().parent
+
+DATABASE_PATH = BASE_DIR / "human_book.db"
 
 INF = 10**9
 CHECKMATE_SCORE = 100000

@@ -42,7 +42,6 @@ def build_book_from_pgn(pgn_path: str):
     games_processed = 0
 
     with open(pgn_path, encoding="utf-8", errors="ignore") as pgn:
-
         while True:
             game = chess.pgn.read_game(pgn)
 
@@ -65,7 +64,6 @@ def build_book_from_pgn(pgn_path: str):
             board = game.board()
 
             for ply, move in enumerate(game.mainline_moves()):
-
                 if ply >= MAX_PLY:
                     break
 

@@ -6,3 +6,4 @@ server.build/
 server.dist/
 *.pgn
 *.db
+*.log
