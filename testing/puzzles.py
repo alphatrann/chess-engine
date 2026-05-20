@@ -1,6 +1,7 @@
 import chess
 import time
 import csv
+from src.config import LEVELS
 from src.search import find_best_move
 
 # =========================
@@ -19,11 +20,11 @@ with open("positions.csv", mode="r") as file:
 # =========================
 # TEST RUNNER
 # =========================
-def run_tests(depth=3):
+def run_tests(level=10):
     correct = 0
     total_time = 0
 
-    print(f"\nRunning tests at depth {depth}\n")
+    print(f"\nRunning tests at level {level}\n")
 
     for test in TESTS:
         print(test["fen"])
@@ -31,7 +32,7 @@ def run_tests(depth=3):
         print(board)
 
         start = time.time()
-        score, move = find_best_move(board, depth)
+        score, move = find_best_move(board, LEVELS[level])
         end = time.time()
 
         elapsed = end - start
@@ -61,4 +62,4 @@ def run_tests(depth=3):
 # RUN
 # =========================
 if __name__ == "__main__":
-    run_tests(depth=5)
+    run_tests(level=10)

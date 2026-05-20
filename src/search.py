@@ -1,139 +1,237 @@
-from typing import Literal, TypedDict
-
+import time
 import chess
 
-from src.eval import evaluate
-from src.phase import get_game_phase
-from src.scoring import score_move
-from src.zobrist import init_zobrist, zobrist_hash
+from typing import Literal, TypedDict
+from chess.polyglot import zobrist_hash
 
-# =========================
-# CONSTANTS
-# =========================
-CHECKMATE_SCORE = 100000
+from src.pst import MG_VALUES
+from src.scoring import evaluate
+from src.config import EngineConfig
+
 INF = 10**9
+MATE = 100000
 
-MAX_DEPTH = 64
-MAX_Q_DEPTH = 6
+MAX_PLY = 128
+MAX_TT_SIZE = 2 * 10**6
+
+nodes = 0
+
+killer_moves = [[None, None] for _ in range(MAX_PLY)]
+history = [[0 for _ in range(64)] for _ in range(64)]
 
 
-# =========================
-# TRANSPOSITION TABLE
-# =========================
-class TranspositionTableItem(TypedDict):
+# =========================================================
+# TT
+# =========================================================
+
+
+class TTEntry(TypedDict):
     depth: int
     score: int
     flag: Literal["EXACT", "LOWER", "UPPER"]
     best_move: chess.Move | None
 
 
-# =========================
-# GLOBALS
-# =========================
-zobrist_tables = init_zobrist()
+tt: dict[int, TTEntry] = {}
 
-tt: dict[int, TranspositionTableItem] = {}
+# =========================================================
+# TIME
+# =========================================================
 
-killer_moves: list[list[chess.Move | None]] = [[None, None] for _ in range(MAX_DEPTH)]
-
-history = [[0 for _ in range(64)] for _ in range(64)]
-
-cache_hits = 0
+TIMEOUT = False
 
 
-# =========================
-# ENTRYPOINT
-# =========================
-def find_best_move(board: chess.Board, depth: int):
-    global cache_hits, killer_moves, history
+def out_of_time(start_time: float, max_time_ms: int) -> bool:
+    elapsed = (time.perf_counter() - start_time) * 1000
+    return elapsed >= max_time_ms
 
-    cache_hits = 0
-    tt.clear()
 
-    killer_moves = [[None, None] for _ in range(MAX_DEPTH)]
-    history = [[0 for _ in range(64)] for _ in range(64)]
+# =========================================================
+# EVAL
+# =========================================================
+
+
+def evaluate_position(board: chess.Board) -> int:
+    score = evaluate(board)
+    return score if board.turn == chess.WHITE else -score
+
+
+# =========================================================
+# MOVE ORDERING
+# =========================================================
+
+
+def score_to_tt(score: int, ply: int) -> int:
+
+    if score > MATE - 1000:
+        return score + ply
+
+    if score < -MATE + 1000:
+        return score - ply
+
+    return score
+
+
+def score_from_tt(score: int, ply: int) -> int:
+
+    if score > MATE - 1000:
+        return score - ply
+
+    if score < -MATE + 1000:
+        return score + ply
+
+    return score
+
+
+def score_move(
+    board: chess.Board,
+    move: chess.Move,
+    tt_move: chess.Move | None,
+    ply: int,
+    config: EngineConfig,
+):
+
+    if move == tt_move:
+        return 10_000_000
+
+    if move.promotion:
+        return 9_000_000
+
+    if board.is_capture(move):
+        victim = board.piece_at(move.to_square)
+        attacker = board.piece_at(move.from_square)
+
+        if victim and attacker:
+            return (
+                5_000_000
+                + 10 * MG_VALUES[victim.piece_type]
+                - MG_VALUES[attacker.piece_type]
+            )
+
+    if config.killer_moves:
+        if move == killer_moves[ply][0]:
+            return 4_000_000
+
+        if move == killer_moves[ply][1]:
+            return 3_999_999
+
+    if config.history_heuristic:
+        return history[move.from_square][move.to_square]
+
+    return 0
+
+
+# =========================================================
+# ROOT
+# =========================================================
+
+
+def find_best_move(
+    board: chess.Board,
+    config: EngineConfig,
+):
+
+    global TIMEOUT
+    global nodes
+
+    TIMEOUT = False
+    nodes = 0
+
+    start_time = time.perf_counter()
 
     best_move = None
-    best_score = -INF
+    best_score = 0
 
-    # iterative deepening
-    for d in range(1, depth + 1):
-        best_score, best_move = __search_root(
-            board,
-            d,
-            best_move,
-        )
+    alpha = -INF
+    beta = INF
 
-    print("⚡ Cache hits:", cache_hits)
+    for depth in range(1, config.max_depth + 1):
+        if out_of_time(start_time, config.max_time_ms):
+            break
+
+        if depth > 1:
+            alpha = best_score - config.aspiration_window
+            beta = best_score + config.aspiration_window
+
+        while True:
+            score, move = search_root(
+                board=board,
+                depth=depth,
+                alpha=alpha,
+                beta=beta,
+                start_time=start_time,
+                config=config,
+            )
+
+            if TIMEOUT:
+                break
+
+            if score <= alpha:
+                alpha -= config.aspiration_window * 2
+                continue
+
+            if score >= beta:
+                beta += config.aspiration_window * 2
+                continue
+
+            best_score = score
+            best_move = move
+
+            break
+
+        if TIMEOUT:
+            break
 
     return best_score, best_move
 
 
-# =========================
+# =========================================================
 # ROOT SEARCH
-# =========================
-def __search_root(
+# =========================================================
+def store_tt(tt, key, depth, score, flag, best_move, ply):
+    existing = tt.get(key)
+
+    if existing is None or depth >= existing["depth"]:
+        tt[key] = {
+            "depth": depth,
+            "score": score_to_tt(score, ply),
+            "flag": flag,
+            "best_move": best_move,
+        }
+
+
+def search_root(
     board: chess.Board,
     depth: int,
-    prev_best_move: chess.Move | None = None,
+    alpha: int,
+    beta: int,
+    start_time: float,
+    config: EngineConfig,
 ):
-    alpha = -INF
-    beta = INF
 
-    best_score = -INF
     best_move = None
+    best_score = -INF
+
+    tt_move = None
+    key = zobrist_hash(board)
+
+    if config.use_tt and key in tt:
+        tt_move = tt[key]["best_move"]
 
     moves = list(board.legal_moves)
 
-    sorted_moves = sorted(
-        moves,
-        key=lambda move: score_move(
-            board,
-            killer_moves,
-            history,
-            move,
-            0,
-        ),
-        reverse=True,
-    )
+    moves.sort(key=lambda m: score_move(board, m, tt_move, 0, config), reverse=True)
 
-    # iterative deepening PV move first
-    if prev_best_move in sorted_moves:
-        sorted_moves.remove(prev_best_move)
-        sorted_moves.insert(0, prev_best_move)
-
-    for move_index, move in enumerate(sorted_moves):
-
+    for i, move in enumerate(moves):
         board.push(move)
 
-        # PVS
-        if move_index == 0:
-            score = -__search(
-                board,
-                depth - 1,
-                1,
-                -beta,
-                -alpha,
-            )
+        if i == 0:
+            score = -search(board, depth - 1, 1, -beta, -alpha, start_time, config)
         else:
-            # null-window search
-            score = -__search(
-                board,
-                depth - 1,
-                1,
-                -alpha - 1,
-                -alpha,
-            )
+            score = -search(board, depth - 1, 1, -alpha - 1, -alpha, start_time, config)
 
-            # re-search if promising
             if alpha < score < beta:
-                score = -__search(
-                    board,
-                    depth - 1,
-                    1,
-                    -beta,
-                    -alpha,
-                )
+                score = -search(board, depth - 1, 1, -beta, -alpha, start_time, config)
 
         board.pop()
 
@@ -143,274 +241,271 @@ def __search_root(
 
         alpha = max(alpha, score)
 
+        if alpha >= beta:
+            break
+
     return best_score, best_move
 
 
-# =========================
-# MAIN SEARCH
-# =========================
-def __search(
+# =========================================================
+# SEARCH
+# =========================================================
+def ordered_moves(board, tt_move, ply, config):
+
+    wins, killers, quiets, bad = [], [], [], []
+
+    for move in board.legal_moves:
+        if move == tt_move:
+            yield move
+            continue
+
+        if board.is_capture(move):
+            if simple_see(board, move) >= 0:
+                wins.append(move)
+            else:
+                bad.append(move)
+
+        elif config.killer_moves and move in killer_moves[ply]:
+            killers.append(move)
+
+        else:
+            quiets.append(move)
+
+    yield from wins
+    yield from killers
+    yield from quiets
+    yield from bad
+
+
+def search(
     board: chess.Board,
     depth: int,
     ply: int,
-    alpha: int = -INF,
-    beta: int = INF,
+    alpha: int,
+    beta: int,
+    start_time: float,
+    config: EngineConfig,
+    extension_count: int = 0,
 ):
-    global cache_hits
 
-    original_alpha = alpha
+    global nodes, TIMEOUT
+    nodes += 1
 
-    # =========================
-    # TT LOOKUP
-    # =========================
-    h = zobrist_hash(board, zobrist_tables)
+    if out_of_time(start_time, config.max_time_ms):
+        TIMEOUT = True
+        return evaluate_position(board)
 
-    if h in tt and tt[h]["depth"] >= depth:
-        entry = tt[h]
+    key = zobrist_hash(board)
 
-        cache_hits += 1
+    tt_entry = tt.get(key) if config.use_tt else None
+    tt_move = None
 
-        if entry["flag"] == "EXACT":
-            return entry["score"]
+    if tt_entry:
+        tt_move = tt_entry["best_move"]
 
-        elif entry["flag"] == "LOWER":
-            alpha = max(alpha, entry["score"])
+        if tt_entry["depth"] >= depth:
+            score = score_from_tt(tt_entry["score"], ply)
 
-        elif entry["flag"] == "UPPER":
-            beta = min(beta, entry["score"])
+            if tt_entry["flag"] == "EXACT":
+                return score
 
-        if alpha >= beta:
-            return entry["score"]
+            elif tt_entry["flag"] == "LOWER":
+                alpha = max(alpha, score)
 
-    # =========================
-    # TERMINAL STATES
-    # =========================
+            elif tt_entry["flag"] == "UPPER":
+                beta = min(beta, score)
+
+            if alpha >= beta:
+                return score
+
     if board.is_checkmate():
-        return -CHECKMATE_SCORE + ply
+        return -MATE + ply
 
-    if (
-        board.is_stalemate()
-        or board.is_repetition()
-        or board.is_insufficient_material()
-    ):
+    if board.is_stalemate():
         return 0
 
-    # =========================
-    # QUIESCENCE
-    # =========================
     if depth <= 0:
-        return __quiescence(board, alpha, beta, ply)
+        return quiescence(board, alpha, beta, start_time, config)
 
-    # =========================
-    # NULL MOVE PRUNING
-    # =========================
-    phase = get_game_phase(board)
+    in_check = board.is_check()
 
-    has_non_pawn_material = (
-        len(board.pieces(chess.QUEEN, board.turn)) > 0
-        or len(board.pieces(chess.ROOK, board.turn)) > 0
-        or len(board.pieces(chess.BISHOP, board.turn)) > 1
-        or len(board.pieces(chess.KNIGHT, board.turn)) > 1
-    )
-
-    allow_null = (
-        depth >= 3 and phase > 6 and has_non_pawn_material and not board.is_check()
-    )
-
-    if allow_null:
-
-        R = 2 + (phase // 12)
-
-        reduced_depth = max(0, depth - 1 - R)
-
+    # NULL MOVE
+    if config.null_move and depth >= 3 and not in_check:
         board.push(chess.Move.null())
-
-        score = -__search(
+        score = -search(
             board,
-            reduced_depth,
+            depth - 1 - config.null_move_reduction,
             ply + 1,
             -beta,
             -beta + 1,
+            start_time,
+            config,
+            extension_count,
         )
-
         board.pop()
-
         if score >= beta:
             return beta
 
-    # =========================
-    # MOVE ORDERING
-    # =========================
-    moves = list(board.legal_moves)
+    static_eval = evaluate_position(board)
 
-    tt_move = None
+    if config.futility_pruning and depth == 1 and not in_check:
+        if static_eval + config.futility_margin <= alpha:
+            return static_eval
 
-    if h in tt:
-        tt_move = tt[h].get("best_move")
-
-    sorted_moves = sorted(
-        moves,
-        key=lambda move: (
-            move == tt_move,
-            score_move(
-                board,
-                killer_moves,
-                history,
-                move,
-                ply,
-            ),
-        ),
-        reverse=True,
-    )
-
-    # =========================
-    # SEARCH LOOP
-    # =========================
     best_score = -INF
     best_move = None
+    original_alpha = alpha
 
-    for move_index, move in enumerate(sorted_moves):
-
-        is_capture = board.is_capture(move)
+    for i, move in enumerate(ordered_moves(board, tt_move, ply, config)):
+        is_cap = board.is_capture(move)
         gives_check = board.gives_check(move)
-
-        is_quiet = not is_capture and not gives_check
-
-        extension = 1 if gives_check else 0
 
         reduction = 0
 
-        # LMR
-        if depth >= 3 and move_index >= 4 and is_quiet:
+        if (
+            config.late_move_reduction
+            and depth >= config.lmr_min_depth
+            and i >= config.lmr_min_move
+            and not is_cap
+            and not gives_check
+            and not in_check
+        ):
             reduction = 1
+
+        extension = (
+            1
+            if (
+                config.check_extensions
+                and gives_check
+                and extension_count < config.max_extensions
+            )
+            else 0
+        )
 
         board.push(move)
 
-        # =========================
-        # PRINCIPAL VARIATION SEARCH
-        # =========================
-
         new_depth = depth - 1 + extension
 
-        if move_index == 0:
-
-            score = -__search(
+        if i == 0:
+            score = -search(
                 board,
                 new_depth,
                 ply + 1,
                 -beta,
                 -alpha,
+                start_time,
+                config,
+                extension_count + extension,
             )
-
         else:
-
-            # reduced/null-window search first
-            score = -__search(
+            score = -search(
                 board,
-                new_depth - reduction,
+                max(0, new_depth - reduction),
                 ply + 1,
                 -alpha - 1,
                 -alpha,
+                start_time,
+                config,
+                extension_count + extension,
             )
 
-            # failed high -> full re-search
-            if score > alpha:
-
-                score = -__search(
+            if alpha < score < beta:
+                score = -search(
                     board,
                     new_depth,
                     ply + 1,
                     -beta,
                     -alpha,
+                    start_time,
+                    config,
+                    extension_count + extension,
                 )
 
         board.pop()
 
-        # =========================
-        # BEST MOVE UPDATE
-        # =========================
+        if TIMEOUT:
+            return alpha
+
         if score > best_score:
             best_score = score
             best_move = move
 
         alpha = max(alpha, score)
 
-        # =========================
-        # BETA CUTOFF
-        # =========================
         if alpha >= beta:
+            if not is_cap and config.killer_moves:
+                killer_moves[ply][1] = killer_moves[ply][0]
+                killer_moves[ply][0] = move
 
-            # killer moves
-            if is_quiet:
-
-                if killer_moves[ply][0] != move:
-                    killer_moves[ply][1] = killer_moves[ply][0]
-                    killer_moves[ply][0] = move
-
+            if config.history_heuristic:
                 history[move.from_square][move.to_square] += depth * depth
 
             break
 
-    # =========================
-    # TT STORE
-    # =========================
+    flag = "EXACT"
     if best_score <= original_alpha:
-        flag: Literal["EXACT", "LOWER", "UPPER"] = "UPPER"
-
+        flag = "UPPER"
     elif best_score >= beta:
         flag = "LOWER"
 
-    else:
-        flag = "EXACT"
-
-    tt[h] = {
-        "score": best_score,
-        "depth": depth,
-        "flag": flag,
-        "best_move": best_move,
-    }
+    store_tt(tt, key, depth, best_score, flag, best_move, ply)
 
     return best_score
 
 
-# =========================
-# QUIESCENCE SEARCH
-# =========================
-def __quiescence(
+def simple_see(board: chess.Board, move: chess.Move):
+
+    if not board.is_capture(move):
+        return 0
+
+    victim = board.piece_at(move.to_square)
+    attacker = board.piece_at(move.from_square)
+
+    if not victim or not attacker:
+        return 0
+
+    return MG_VALUES[victim.piece_type] - MG_VALUES[attacker.piece_type]
+
+
+# =========================================================
+# QUIESCENCE
+# =========================================================
+
+
+def quiescence(
     board: chess.Board,
-    alpha: int = -INF,
-    beta: int = INF,
-    ply: int = 0,
+    alpha: int,
+    beta: int,
+    start_time: float,
+    config: EngineConfig,
 ):
-    if ply >= MAX_Q_DEPTH:
-        return evaluate(board)
 
-    stand_pat = evaluate(board)
+    global TIMEOUT
+    global nodes
 
-    if stand_pat >= beta:
+    nodes += 1
+
+    if out_of_time(start_time, config.max_time_ms):
+        return alpha
+
+    stand = evaluate_position(board)
+
+    if config.delta_pruning and stand + config.delta_margin < alpha:
+        return alpha
+
+    if stand >= beta:
         return beta
 
-    alpha = max(alpha, stand_pat)
+    alpha = max(alpha, stand)
 
-    captures = list(board.generate_legal_captures())
+    moves = list(board.generate_legal_captures())
 
-    captures = sorted(
-        captures,
-        key=lambda move: board.is_capture(move),
-        reverse=True,
-    )
-
-    for move in captures:
+    for move in moves:
+        if simple_see(board, move) < 0:
+            continue
 
         board.push(move)
-
-        score = -__quiescence(
-            board,
-            -beta,
-            -alpha,
-            ply + 1,
-        )
-
+        score = -quiescence(board, -beta, -alpha, start_time, config)
         board.pop()
 
         if score >= beta:
